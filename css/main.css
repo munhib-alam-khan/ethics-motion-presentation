@@ -1,0 +1,96 @@
+/* ───────────────────────────── base / stage ───────────────────────────── */
+html, body {
+  margin: 0; width: 100%; height: 100%; overflow: hidden;
+  background: #050505; color: #eee;
+  -webkit-user-select: none; user-select: none;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+}
+body.hide-cursor { cursor: none; }
+#viewport { position: fixed; inset: 0; overflow: hidden; background: #000; }
+#stage {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+  transform-origin: 0 0; overflow: hidden; background: #0b0b0c;
+  contain: strict;
+}
+img { -webkit-user-drag: none; user-drag: none; }
+
+/* each scene is a full 1920x1080 world */
+.scene { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+.scene.on { visibility: visible; }
+.sub { position: absolute; inset: 0; overflow: hidden; }  /* embedded copy of a previous scene */
+
+.layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; will-change: transform; }
+.hud { position: absolute; inset: 0; pointer-events: none; }
+
+/* collage piece */
+.pc { position: absolute; display: block; height: auto; transform-origin: 50% 50%; backface-visibility: hidden; }
+.abs { position: absolute; }
+.fill { position: absolute; inset: 0; }
+.bgtex { background-size: cover; background-position: center; }
+
+/* ───────────────────────────── typography ───────────────────────────── */
+.anton { font-family: 'Anton', 'Oswald', Impact, sans-serif; font-weight: 400; line-height: .9; text-transform: uppercase; }
+.oswald { font-family: 'Oswald', 'Anton', sans-serif; text-transform: uppercase; }
+.type  { font-family: 'Special Elite', 'Courier New', monospace; text-transform: uppercase; letter-spacing: .14em; }
+.mono  { font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .22em; }
+.hand  { font-family: 'Caveat', cursive; font-weight: 500; }
+.marker{ font-family: 'Permanent Marker', cursive; }
+.grunge { -webkit-mask-image: var(--grunge); mask-image: var(--grunge); -webkit-mask-size: 760px auto; mask-size: 760px auto; }
+.ch { display: inline-block; white-space: pre; will-change: transform, opacity; }
+.ca { text-shadow: -2px 0 rgba(255, 30, 70, .55), 2px 0 rgba(0, 210, 255, .42); }     /* chromatic fringe */
+
+/* torn-paper text holders: paper strip as raster background */
+.strip { position: absolute; display: flex; align-items: center; justify-content: center; background-size: 100% 100%; background-repeat: no-repeat; white-space: nowrap; }
+
+/* ───────────────────────────── film overlays ───────────────────────────── */
+#fx { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+#grain { position: absolute; inset: -60px; background-image: url(../assets/textures/grain_0.png); mix-blend-mode: overlay; opacity: .26; }
+#dust { position: absolute; inset: 0; background-size: 1920px 1080px; mix-blend-mode: screen; opacity: .55; }
+#vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 75% 70% at 50% 48%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); }
+#leak { position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0;
+  background: radial-gradient(ellipse 40% 60% at 92% 20%, rgba(255,170,110,.55), rgba(255,120,60,0) 70%),
+              radial-gradient(ellipse 30% 40% at 4% 85%, rgba(120,170,255,.35), rgba(0,0,0,0) 70%); }
+#flash { position: absolute; inset: 0; background: #f4efe4; opacity: 0; }
+#black { position: absolute; inset: 0; background: #000; opacity: 0; }
+body.lang-doc #grain { opacity: .30; }  body.lang-doc #dust { opacity: .55; }
+body.lang-collage #grain { opacity: .18; } body.lang-collage #dust { opacity: .22; }
+body.lang-collage #vignette { opacity: .55; }
+#grain, #dust, #vignette { transition: opacity .8s; }
+
+/* ───────────────────────────── loader / navigator ───────────────────────────── */
+#loader { position: fixed; inset: 0; z-index: 100; background: #070707; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; color: #d9d4c8; }
+#loader .ttl { font-family: 'Special Elite', monospace; letter-spacing: .3em; font-size: 15px; opacity: .8; }
+#loader .bar { width: 320px; height: 2px; background: #222; overflow: hidden; }
+#loader .bar i { display: block; height: 100%; width: 0; background: #c8201f; transition: width .2s; }
+#loader .go { font-family: 'IBM Plex Mono', monospace; letter-spacing: .3em; font-size: 12px; opacity: 0; transition: opacity .6s; }
+#loader.ready .go { opacity: .75; }
+#loader .note { position: absolute; bottom: 28px; font: 11px 'IBM Plex Mono', monospace; letter-spacing: .2em; opacity: .35; }
+
+#nav { position: fixed; inset: 0; z-index: 90; background: rgba(6,6,6,.92); display: none; padding: 48px 64px; box-sizing: border-box; overflow: auto; }
+#nav.on { display: block; }
+#nav h3 { font: 12px 'IBM Plex Mono', monospace; letter-spacing: .3em; color: #888; margin: 0 0 22px; }
+#nav ol { columns: 3; column-gap: 40px; margin: 0; padding: 0; list-style: none; }
+#nav li { font: 14px 'IBM Plex Mono', monospace; color: #555; padding: 5px 0; break-inside: avoid; }
+#nav li.built { color: #ddd; cursor: pointer; }
+#nav li.built:hover { color: #ff4040; }
+#nav li.cur { color: #ff3b3b; }
+#nav li b { display: inline-block; width: 34px; color: inherit; opacity: .6; font-weight: 400; }
+
+#toast { position: fixed; right: 18px; bottom: 16px; z-index: 95; font: 11px 'IBM Plex Mono', monospace; letter-spacing: .2em; color: #ccc; background: rgba(0,0,0,.6); padding: 6px 10px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ───────────────────────────── export mode ───────────────────────────── */
+body.export { overflow: auto; background: #222; height: auto; }
+body.export #viewport { position: static; background: none; overflow: visible; }
+body.export .frame { position: relative; width: 1920px; height: 1080px; margin: 0 auto 24px; overflow: hidden; background: #0b0b0c; }
+body.export .frame #fxs { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+body.export .scene { visibility: visible; }
+body.export .frame .lbl { position: absolute; left: 12px; top: 8px; z-index: 60; font: 12px 'IBM Plex Mono', monospace; color: #fff; background: rgba(0,0,0,.6); padding: 3px 8px; }
+body.export.print .frame .lbl { display: none; }
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  body.export { background: none; }
+  body.export .frame { margin: 0; page-break-after: always; break-after: page; }
+  body.export .frame .lbl { display: none; }
+}
