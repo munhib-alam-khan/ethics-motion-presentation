@@ -19,7 +19,7 @@ Film.scene({
     </div>
     <div class="fill" data-k="B" style="clip-path:${Film.poly(Rp)}">
       <div class="fill">${Film.blueBG()}</div>
-      ${Film.GENPH('site', { id: 'b1', x: 1130, y: 80, w: 700, h: 440, r: 2 })}
+      ${P('s20_site', { id: 'b1', x: 1130, y: 80, w: 700, r: 2 })}
       ${Film.blocks({ id: 'blk', x: 1060, y: 560, cols: 4, rows: 3, bw: 110, bh: 92, seed: 6, bond: 1 })}
       ${P('s04_papers', { id: 'b3', x: 1540, y: 540, w: 330, r: 4, style: 'filter:grayscale(1) contrast(1.1)' })}
       ${Film.tag('CONSTRUCTION', { id: 'bT', tex: 'strip_white', x: 1180, y: 790, w: 640, h: 120, r: 2, size: 96 })}

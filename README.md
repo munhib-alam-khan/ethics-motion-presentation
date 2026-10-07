@@ -5,10 +5,9 @@ Business Ethics · Fall 2026. This is a presenter-controlled, offline, cinematic
 - Direction, reference analysis, motion language, Scenes 01–05 storyboard: [`docs/PHASE1_DIRECTION.md`](docs/PHASE1_DIRECTION.md)
 - Data check against the workbook, scene summary 06–34, images still to generate, PDF hero frames: [`docs/PHASE2_NOTES.md`](docs/PHASE2_NOTES.md)
 
-## Before presenting: two things to set
+## Evidence link
 
-1. **Evidence link (Scene 34):** open `js/config.js` and paste the OneDrive link into `EVIDENCE_URL`. Until then, the appendix shows a red placeholder.
-2. **Construction photos (Scenes 20–23):** save the four images listed in `docs/PHASE2_NOTES.md` §3 into `assets/images/` using exactly those filenames. They replace the "IMAGE TO GENERATE" cards automatically.
+The OneDrive evidence link shown in Scene 34 is set in `js/config.js` (`EVIDENCE_URL`). Change it there if the link moves.
 
 ## Launch
 

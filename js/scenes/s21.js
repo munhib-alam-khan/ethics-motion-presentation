@@ -8,7 +8,7 @@ Film.scene({
     <div class="cam fill" data-k="world">
       <div class="layer" data-depth="0.5">${Film.blueBG()}</div>
       <div class="layer" data-depth="0.8">
-        ${Film.GENPH('site', { id: 'site', x: 1010, y: 60, w: 840, h: 520, r: 2 })}
+        ${P('s20_site', { id: 'site', x: 1010, y: 60, w: 840, r: 2 })}
         ${Film.blocks({ id: 'wall', x: 1040, y: 640, cols: 4, rows: 3, bw: 110, bh: 92, seed: 3, bond: 1 })}
         ${P('s04_papers', { id: 'bills', x: 1500, y: 560, w: 400, r: -4, style: 'filter:grayscale(1) contrast(1.1)' })}
         ${P('s01_penhand', { id: 'pen', x: 1270, y: 780, w: 330, r: 3 })}

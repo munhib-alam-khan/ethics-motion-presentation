@@ -12,16 +12,16 @@ Film.scene({
       <div class="layer" data-depth="0.5">${Film.blueBG()}</div>
       <div class="layer" data-depth="1">
         <div class="abs mono" data-k="kick" style="left:70px;top:40px;font-size:17px;letter-spacing:.32em;color:#e3ebf4">INTERVIEW 02 &nbsp;·&nbsp; CHECKS INTERRUPT SHORTCUTS</div>
-        ${Film.GENPH('contractor', { id: 'c1', x: 60, y: 160, w: 330, h: 250, r: -2 })}
+        ${P('s22_bills', { id: 'c1', x: 60, y: 160, w: 340, r: -2 })}
         ${P('s04_papers', { id: 'c2', x: 470, y: 150, w: 300, r: 3, style: 'filter:grayscale(1) contrast(1.1)' })}
         ${P('s15_clipboard', { id: 'c3', x: 840, y: 190, w: 340, r: -2, style: 'filter:grayscale(1) contrast(1.1)' })}
         ${P('s01_penhand', { id: 'c4', x: 1250, y: 150, w: 290, r: 3 })}
         ${lab('CONTRACTOR', 90, 430, 'l1')}${lab('BILL', 560, 430, 'l2')}${lab('CHECK', 930, 430, 'l3')}${lab('APPROVAL', 1270, 430, 'l4')}
         ${stamp('VERIFIED', 930, 300, -8, 'st1')}
-        ${Film.GENPH('worker', { id: 'w1', x: 60, y: 580, w: 330, h: 280, r: 2 })}
+        ${P('s22_worker', { id: 'w1', x: 170, y: 520, w: 140, r: 0, style: 'filter:saturate(.75)' })}
         <div class="abs" data-k="w2" style="left:470px;top:600px;width:330px;height:240px">${tapeBar('tA', -10, 60, 360, -12)}${tapeBar('tB', -10, 140, 360, 9)}</div>
         <div class="abs" data-k="w3" style="left:850px;top:600px;width:330px;height:260px">${Film.blocks({ id: 'blk', x: 20, y: 40, cols: 3, rows: 2, bw: 96, bh: 82, seed: 4, bond: 1 })}${stamp('COMPLIANT', 40, 160, 6, 'st2')}</div>
-        ${Film.GENPH('engineer', { id: 'w4', x: 1250, y: 580, w: 330, h: 280, r: -2 })}
+        ${P('s22_engineer', { id: 'w4', x: 1250, y: 560, w: 300, r: -2 })}
         ${lab('WORKER', 140, 880, 'l5')}${lab('SAFETY', 540, 880, 'l6')}${lab('COMPLIANCE', 870, 880, 'l7')}${lab('MONITORING', 1260, 880, 'l8')}
         <svg class="abs" style="left:0;top:0;overflow:visible" width="1920" height="1080">
           <g stroke="#f2f5f9" stroke-width="5" fill="none" stroke-linecap="round" class="chain">
@@ -31,7 +31,7 @@ Film.scene({
           <path data-k="cut2" d="M240 580 C 360 470, 520 450, 640 520" fill="none" stroke="#ff3b30" stroke-width="7" stroke-dasharray="16 12"/>
         </svg>
         <div class="abs hand" data-k="h1" style="left:720px;top:-6px;font-size:40px;color:#ffd2cc;transform:rotate(-5deg)">improper means?</div>
-        <div class="abs hand" data-k="h2" style="left:300px;top:430px;font-size:40px;color:#ffd2cc;transform:rotate(-4deg)">skip the guidelines?</div>
+        <div class="abs hand" data-k="h2" style="left:360px;top:515px;font-size:40px;color:#ffd2cc;transform:rotate(-4deg)">skip the guidelines?</div>
         ${tapeBar('bar1', 930, 30, 280, 74)}
         ${tapeBar('bar2', 560, 450, 260, 70)}
         <div class="abs anton" data-k="x1" style="left:985px;top:40px;font-size:90px;color:#ff3b30">✕</div>

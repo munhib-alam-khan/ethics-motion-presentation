@@ -59,18 +59,9 @@ Sample breadth (Scene 07) shows sector *names only*, lightly grouped from the fr
 | 33 | dark | fade | The Code-of-Conduct print, the final line, then THANK YOU. Restrained, with no impacts. |
 | 34 | static | — | Appendix: method, interpretation rules, the cited item numbers, and the evidence-link box. |
 
-## 3. Images still to generate (placeholders on screen)
+## 3. Construction images (supplied)
 
-There are no construction photographs in the supplied styleframes, and the sandbox cannot reach any image sources. Scenes 20–23 therefore show clearly labelled **IMAGE TO GENERATE** cards. Save each file under exactly this name in `assets/images/` and it appears automatically, cropped to fill its frame (no code change needed):
-
-| Filename | Used in | Description |
-|---|---|---|
-| `construction_site_wide.jpg` | 20, 21, 23, 24 | Wide B/W documentary photo: a university building under construction — concrete frame, scaffolding, a crane, workers in hard hats. 16:10, ≥ 2400 px wide. |
-| `construction_engineer_inspecting.jpg` | 22 | B/W photo: site engineer with clipboard verifying concrete / rebar work. ~1.2:1. |
-| `construction_worker_cutout.png` | 22 | Labourer in hard hat + hi-vis vest carrying materials. Transparent background (or plain; it is cropped to fill). |
-| `construction_contractor_bills.jpg` | 22 | B/W close photo: contractor handing a stack of bills / invoices across a site-office desk. ~1.3:1. |
-
-The higher-resolution upgrade list for Scenes 01–05 (`docs/PHASE1_DIRECTION.md` §6) still applies, and those layers are reused throughout the film.
+The four supplied construction photos are in `assets/source/construction_*.webp`. `tools/build_assets.py` turns them into torn documentary prints (`s20_site`, `s22_engineer`, `s22_bills`) and a cut-out (`s22_worker`), which are used in Scenes 20–24. No placeholders remain. The evidence link is set in `js/config.js`.
 
 ## 4. PDF hero frames (19)
 
