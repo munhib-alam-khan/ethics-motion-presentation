@@ -40,11 +40,23 @@
   }
   function split(el) {
     if (!el || el.dataset.split) return el ? [...el.querySelectorAll('.ch')] : [];
-    el.dataset.split = 1; const out = [];
+    el.dataset.split = 1;
+    return splitInner(el);
+  }
+  function splitInner(el) {
+    const out = [];
     [...el.childNodes].forEach(n => {
+      if (n.nodeType === 1 && n.tagName !== 'BR') { out.push(...splitInner(n)); return; }
       if (n.nodeType !== 3) return;                 // keep <br> etc. in place
+      // words stay unbreakable (inline-block letters would otherwise wrap mid-word)
       const frag = document.createDocumentFragment();
-      for (const c of n.textContent) { const s = document.createElement('span'); s.className = 'ch'; s.textContent = c; frag.appendChild(s); out.push(s); }
+      n.textContent.split(/(\s+)/).forEach(w => {
+        if (!w) return;
+        if (/^\s+$/.test(w)) { frag.appendChild(document.createTextNode(w)); return; }
+        const ws = document.createElement('span'); ws.className = 'w';
+        for (const c of w) { const s = document.createElement('span'); s.className = 'ch'; s.textContent = c; ws.appendChild(s); out.push(s); }
+        frag.appendChild(ws);
+      });
       n.replaceWith(frag);
     });
     return out;
@@ -89,12 +101,14 @@
   const Film = window.Film = {
     W, H, IMG, TEX, P, STRIP, split, shuffle, rnd, pick, Cam, boil, EXPORT,
     scene(def) { SCENES.push(def); SCENES.sort((a, b) => a.n - b.n); },
+    def(n) { return SCENES.find(s => s.n === n); },
     /** render a scene's settled final frame into container (used to start the next scene seamlessly) */
     staticCopy(n, container, camState) {
       const def = SCENES.find(s => s.n === n);
       const r = def.build(container, { static: true });
       r.tl.progress(1, true); r.tl.kill();
       if (r.cam) r.cam.update();              // progress(…, true) suppresses onUpdate
+      Film.finalize && Film.finalize(container);
       if (camState && r.cam) r.cam.set(camState);
       return r;
     },
@@ -122,15 +136,26 @@
     const def = SCENES[i];
     const el = sceneEl(def.n);
     const forwardAdjacent = prevIdx >= 0 && i === prevIdx + 1;
+    flushOld();
     // capture the outgoing camera so the incoming scene's embedded copy matches 1:1
     if (prev && prev.cam) Film.lastCam[SCENES[prevIdx].n] = { fx: prev.cam.fx, fy: prev.cam.fy, s: prev.cam.s, r: 0, sx: 0, sy: 0 };
-    if (prev) teardown(prev, sectionEls[SCENES[prevIdx].n]);
+    if (prev) {
+      const oldEl = sectionEls[SCENES[prevIdx].n];
+      if (forwardAdjacent && def.cover && oldEl !== el) {
+        // keep the outgoing frame frozen underneath while the new scene covers it
+        prev.tl && prev.tl.pause(); prev.idle && prev.idle.pause(); (prev.extra || []).forEach(t => t.pause());
+        oldEl.style.zIndex = 1;
+        const fn = () => { teardown(prev, oldEl); oldEl.style.zIndex = ''; };
+        pendingOld = gsap.delayedCall(def.cover, fn); pendingOld.fn = fn;
+      } else teardown(prev, oldEl);
+    }
     if (i === prevIdx && el.innerHTML) teardown(cur, el);
+    el.style.zIndex = 2;
     el.innerHTML = '';
     idx = i;
-    document.body.classList.remove('lang-doc', 'lang-collage');
+    document.body.classList.remove('lang-doc', 'lang-collage', 'lang-data', 'lang-dark');
     document.body.classList.add('lang-' + (def.lang || 'doc'));
-    const r = def.build(el, { forwardAdjacent, replay: !!opts.replay });
+    const r = def.build(el, { forwardAdjacent, replay: !!opts.replay, cover: !!(forwardAdjacent && def.cover) });
     cur = r;
     el.classList.add('on');
     // cuts that are not the natural forward order get a short film-cut from black
@@ -141,9 +166,11 @@
     gsap.set('#flash', { opacity: 0 });
     r.tl.play(0);
     if (r.idle) r.tl.eventCallback('onComplete', () => r.idle.play(0));
-    Sfx.room(def.lang === 'doc' ? 0.025 : 0.0);
+    Sfx.room(def.lang === 'doc' || def.lang === 'dark' ? 0.025 : 0.0);
     updateNav();
   }
+  let pendingOld = null;
+  function flushOld() { if (pendingOld) { pendingOld.kill(); pendingOld.fn(); pendingOld = null; } }
   Film.go = go;
   const next = () => go(Math.min(idx + 1, SCENES.length - 1));
   const prevS = () => go(Math.max(idx - 1, 0));
@@ -165,7 +192,7 @@
       grain.style.transform = `translate(${rnd(-50, 50)}px,${rnd(-50, 50)}px)`;
       dust.style.backgroundImage = Math.random() < .55 ? `url(${TEX}dust_${Math.floor(Math.random() * 3)}.png)` : 'none';
       dust.style.backgroundPosition = `${rnd(-200, 200)}px ${rnd(-100, 100)}px`;
-      leak.style.opacity = document.body.classList.contains('lang-doc') ? (0.10 + Math.random() * 0.06).toFixed(3) : 0;
+      leak.style.opacity = document.body.classList.contains('lang-doc') || document.body.classList.contains('lang-data') ? (0.10 + Math.random() * 0.06).toFixed(3) : 0;
       for (const b of boilers) {
         if (!b.el.isConnected) { boilers.delete(b); continue; }
         b.el.style.translate = `${rnd(-b.amp, b.amp).toFixed(1)}px ${rnd(-b.amp, b.amp).toFixed(1)}px`;
@@ -195,6 +222,7 @@
     });
     document.getElementById('viewport').addEventListener('click', e => {
       Sfx.init();
+      if (e.target.closest('a')) return;              // links (appendix evidence) stay clickable
       if (e.clientX < innerWidth * 0.33) prevS(); else next();
     });
     addEventListener('contextmenu', e => e.preventDefault());
@@ -229,8 +257,8 @@
 
   /* ───────────── preload ───────────── */
   function preload(onProgress) {
-    const names = Object.keys(L).map(n => IMG + n + '.webp');
-    const tex = ['paper_white', 'paper_dark', 'paper_grey', 'strip_red', 'strip_yellow', 'strip_cyan', 'strip_white', 'strip_white_tall', 'strip_red_block', 'patch_cyan', 'patch_yellow', 'patch_red', 'patch_black'].map(n => TEX + n + '.webp')
+    const names = Object.keys(L).map(n => IMG + n + '.webp').concat([1, 2, 3, 4, 5].map(i => IMG + 's25_person' + i + '_mono.webp'));
+    const tex = ['concrete', 'blueprint', 'hazard_tape', 'paper_white', 'paper_dark', 'paper_grey', 'strip_red', 'strip_yellow', 'strip_cyan', 'strip_white', 'strip_white_tall', 'strip_red_block', 'patch_cyan', 'patch_yellow', 'patch_red', 'patch_black'].map(n => TEX + n + '.webp')
       .concat(['grain_0', 'grain_1', 'grain_2', 'dust_0', 'dust_1', 'dust_2', 'halftone_black', 'rip_edge'].map(n => TEX + n + '.png'));
     const all = names.concat(tex); let done = 0;
     window.__keep = [];
@@ -254,13 +282,14 @@
       const fr = document.createElement('div'); fr.className = 'frame'; fr.id = 'scene-' + def.n;
       const sc = document.createElement('section'); sc.className = 'scene on'; fr.appendChild(sc);
       fr.insertAdjacentHTML('beforeend', `<div id="fxs">${fxTpl}</div><div class="lbl">SCENE ${String(def.n).padStart(2, '0')} — ${OUTLINE[def.n - 1]}</div>`);
-      const doc = def.lang !== 'collage';
+      const doc = def.lang === 'doc' || def.lang === 'dark';
       fr.querySelector('#fxs #grain').style.opacity = doc ? .26 : .16;
       fr.querySelector('#fxs #dust').style.opacity = doc ? .45 : .2;
       vp.appendChild(fr);
       const r = def.build(sc, { static: true, export: true });
       r.tl.progress(1, true);
       if (r.cam) r.cam.update();
+      Film.finalize && Film.finalize(sc);
     }
     // single-scene export: fit the frame to the window for screenshots
     if (list.length === 1 && params.get('fit') !== null) {

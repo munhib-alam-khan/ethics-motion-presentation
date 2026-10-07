@@ -44,12 +44,13 @@ Film.scene({
     const q = k => Film.q(root, k);
     // arrows point at the employee
     [['a1', 22], ['a2', 160], ['a3', -28], ['a4', 205]].forEach(([k, r]) => { q(k).dataset.r = r; gsap.set(q(k), { rotation: r }); });
-    const prev = Film.staticCopy(3, q('prev'), ctx.forwardAdjacent ? Film.lastCam[3] : null);
+    const prev = ctx.static ? null : Film.staticCopy(3, q('prev'), ctx.forwardAdjacent ? Film.lastCam[3] : null);   // final frame never shows scene 03
     const cam = new Film.Cam(q('world'));
     const tl = gsap.timeline({ paused: true });
     const pq = k => Film.q(q('prev'), k);
 
     // ── 0.0  the question is torn off the wall
+    if (prev) {
     const fly = [['q4', 300, 900, 25], ['q2', -300, -900, -20], ['q1', -900, -400, -30], ['q3', -600, 700, 40], ['arrow', 900, -300, 60]];
     fly.forEach(([k, x, y, r], i) => tl.to(pq(k), { x, y, rotation: '+=' + r, duration: .55, ease: 'power3.in' }, .05 + i * .05));
     tl.to(pq('L'), { x: '-=900', duration: .6, ease: 'power3.in' }, .05);
@@ -57,6 +58,7 @@ Film.scene({
     tl.to(pq('intrude'), { y: '+=900', rotation: 8, duration: .6, ease: 'power3.in' }, .1);
     tl.to(Film.qa(q('prev'), '[data-k=sky],[data-k=climb],[data-k=alert],[data-k=crowd3]'), { opacity: 0, duration: .25 }, .3);
     tl.call(() => { Sfx.play('rip'); }, null, .05);
+    }
     tl.set(q('prev'), { visibility: 'hidden' }, .75);
 
     // ── 0.5  the employee is dropped in (stop-motion, on twos)
@@ -108,6 +110,6 @@ Film.scene({
     const idle = gsap.timeline({ paused: true, repeat: -1, yoyo: true });
     idle.to(cam, { s: 1.13, duration: 7, ease: 'sine.inOut', onUpdate: cam.update });
     if (ctx.static) { Film.boil([q('emp')], .8, .15); Film.boil([q('lman'), q('lcar'), q('alert')], 1.2, .5); }
-    return { tl, cam, idle, extra: [prev.tl] };
+    return { tl, cam, idle, extra: prev ? [prev.tl] : [] };
   }
 });

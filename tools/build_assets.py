@@ -39,6 +39,8 @@ def load(name):
 
 SF1 = load("styleframe_01_opening_documentary.webp")
 SF2 = load("styleframe_02_integrity_pressure.webp")
+SF3 = load("styleframe_03_fmcg_inventory.webp")
+SF4 = load("styleframe_04_favouritism.webp")
 
 rng = np.random.default_rng(7)
 
@@ -349,9 +351,128 @@ def build_pieces():
     cutout(SF2, "s04_cliff", (1200, 590, 1440, 941), border=3,
            clip_poly=[(1200, 590), (1440, 590), (1440, 941), (1200, 941)])
 
+# ---------------------------------------------------------------- phase 2
+def split_people(src, prefix, box, thresh=110, min_frac=.25):
+    """Segment a group photo and save every person as its own cut-out (left→right)."""
+    global _session
+    from rembg import remove, new_session
+    if _session is None: _session = new_session("isnet-general-use")
+    B = [int(v * UP) for v in box]
+    c = src.crop(B); a = np.array(remove(c, session=_session).split()[3]) > thresh
+    a = ndimage.binary_opening(a, iterations=2); a = ndimage.binary_fill_holes(a)
+    lab, n = ndimage.label(a)
+    sizes = ndimage.sum(a, lab, range(1, n + 1))
+    keep = [i + 1 for i, s_ in enumerate(sizes) if s_ > sizes.max() * min_frac]
+    objs = ndimage.find_objects(lab)
+    keep.sort(key=lambda i: objs[i - 1][1].start)
+    k = 1920 / (REF_W * UP)
+    for j, i in enumerate(keep):
+        sl = objs[i - 1]; m = (lab == i)
+        m = ndimage.gaussian_filter(m.astype(np.float32), 1.0) > .5
+        y0, y1, x0, x1 = sl[0].start, sl[0].stop, sl[1].start, sl[1].stop
+        pad = 24
+        W, H = x1 - x0 + pad * 2, y1 - y0 + pad * 2
+        M = np.zeros((H, W), bool); M[pad:pad + y1 - y0, pad:pad + x1 - x0] = m[y0:y1, x0:x1]
+        out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        Mb = ndimage.binary_dilation(M, iterations=int(3 * UP))
+        white = Image.new("RGBA", (W, H), (242, 238, 228, 255)); white.putalpha(Image.fromarray((ndimage.gaussian_filter(Mb.astype(np.float32), .8) * 255).astype(np.uint8)))
+        out.alpha_composite(white)
+        ph = Image.new("RGBA", (W, H), (0, 0, 0, 0)); ph.paste(c.crop((x0 - pad, y0 - pad, x1 + pad, y1 + pad)), (0, 0))
+        ph.putalpha(Image.fromarray((ndimage.gaussian_filter(M.astype(np.float32), .6) * 255).astype(np.uint8)))
+        out.alpha_composite(ph)
+        name = f"{prefix}{j + 1}"
+        out.save(os.path.join(IMG, name + ".webp"), "WEBP", quality=86, method=5)
+        # monochrome token variant for the 67-respondent system
+        rgb, al = out.convert("RGB"), out.split()[3]
+        g = ImageEnhance.Contrast(ImageOps.grayscale(rgb)).enhance(1.15).convert("RGBA"); g.putalpha(al)
+        g.thumbnail((140, 300), Image.LANCZOS)
+        g.save(os.path.join(IMG, name + "_mono.webp"), "WEBP", quality=88, method=5)
+        manifest[name] = dict(x=round((B[0] + x0 - pad) * k), y=round((B[1] + y0 - pad) * k), w=round(W * k), h=round(H * k))
+        print("  person", name, out.size)
+
+def inpaint_region(src, box, mask_poly=None, dilate=6):
+    """Remove an object from src (in place) using OpenCV inpainting; box in REF coords."""
+    import cv2
+    global _session
+    from rembg import remove, new_session
+    if _session is None: _session = new_session("isnet-general-use")
+    B = [int(v * UP) for v in box]
+    c = src.crop(B)
+    m = np.array(remove(c, session=_session).split()[3]) > 60
+    m = ndimage.binary_dilation(m, iterations=int(dilate * UP)).astype(np.uint8) * 255
+    arr = cv2.cvtColor(np.array(src), cv2.COLOR_RGB2BGR)
+    full = np.zeros(arr.shape[:2], np.uint8); full[B[1]:B[3], B[0]:B[2]] = m
+    out = cv2.inpaint(arr, full, 9, cv2.INPAINT_TELEA)
+    return Image.fromarray(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+
+def build_phase2_textures():
+    print("phase 2 textures")
+    # concrete (for the carton → concrete-block match cut)
+    w = h = 900
+    n = fbm(h, w, 61, scales=(128, 32, 8, 2), weights=(1, .6, .4, .3))
+    r = np.random.default_rng(61)
+    pores = ndimage.gaussian_filter((r.random((h, w)) > .992).astype(np.float32), .8) * 90
+    lum = 150 + (n - .5) * 60 - pores + r.normal(0, 6, (h, w))
+    rgb = np.stack([lum, lum * 1.0 + 2, lum * 1.02 + 4], -1)
+    save_tex(Image.fromarray(rgb.clip(0, 255).astype(np.uint8)), "concrete.webp")
+    # blueprint paper with drafting grid + plan lines
+    W, H = 1800, 1000
+    bp = paper(W, H, (28, 70, 120), 62, fibres=False)
+    d = ImageDraw.Draw(bp, "RGBA")
+    for x in range(0, W, 25): d.line([(x, 0), (x, H)], fill=(170, 200, 235, 40 if x % 100 else 90), width=1)
+    for y in range(0, H, 25): d.line([(0, y), (W, y)], fill=(170, 200, 235, 40 if y % 100 else 90), width=1)
+    rr = random.Random(5)
+    for _ in range(14):   # plan rectangles / walls
+        x0, y0 = rr.randint(80, W - 500), rr.randint(80, H - 300)
+        d.rectangle([x0, y0, x0 + rr.randint(200, 450), y0 + rr.randint(120, 260)], outline=(225, 238, 252, 170), width=3)
+    for _ in range(10):
+        x0, y0 = rr.randint(0, W), rr.randint(0, H)
+        d.line([(x0, y0), (x0 + rr.randint(-400, 400), y0)], fill=(225, 238, 252, 120), width=2)
+    save_tex(bp, "blueprint.webp")
+    # hazard tape
+    W, H = 2200, 90
+    t = Image.new("RGB", (W, H), (240, 196, 24)); d = ImageDraw.Draw(t)
+    for x in range(-H, W, 90): d.polygon([(x, H), (x + 45, H), (x + 45 + H, 0), (x + H, 0)], fill=(22, 22, 22))
+    t = Image.blend(t, paper(W, H, (128, 128, 128), 63, fibres=False), .18)
+    tape = t.convert("RGBA"); a = np.full((H, W), 255, np.uint8)
+    edge = 6 + noise1d(W, 4, 64); edge2 = H - 6 + noise1d(W, 4, 65)
+    yy = np.arange(H)[:, None]; a[(yy < edge[None, :]) | (yy > edge2[None, :])] = 0
+    tape.putalpha(Image.fromarray(a)); save_tex(tape, "hazard_tape.webp")
+
+def build_phase2_pieces():
+    print("FMCG pieces (styleframe 03)")
+    piece(SF3, "s15_cartons", [(705, 0), (1172, 0), (1172, 252), (1366, 252), (1370, 540), (1250, 780), (760, 800), (722, 600), (700, 300)], amp=9)
+    piece(SF3, "s15_worker_right", rect(1252, 512, 1500, 722), amp=8)
+    piece(SF3, "s15_aisle", rect(1462, 420, 1668, 700), amp=8)
+    piece(SF3, "s15_clipboard", rect(172, 682, 560, 880), amp=8)
+    piece(SF3, "s15_channel", [(600, 668), (1008, 660), (1018, 938), (592, 938)], amp=8)
+    piece(SF3, "s15_monthend", rect(1188, 46, 1660, 238), amp=7)
+    piece(SF3, "s15_store", rect(4, 4, 248, 140), amp=7)
+    piece(SF3, "s15_shelves", rect(342, 4, 700, 180), amp=7)
+    print("favouritism pieces (styleframe 04)")
+    global SF4
+    piece(SF4, "s25_stairs", [(1000, 560), (1180, 478), (1668, 430), (1668, 938), (902, 938), (930, 700)], amp=9)
+    piece(SF4, "s25_ledge", rect(4, 702, 600, 938), amp=8)
+    piece(SF4, "s25_crown", rect(1310, 4, 1560, 112), amp=6, fringe=6)
+    piece(SF4, "s25_city", rect(640, 400, 900, 560), amp=6, fringe=6)
+    cutout(SF4, "s25_climber", (856, 256, 1044, 532), border=3, extra_keep=[(872, 384), (948, 384), (948, 452), (872, 452)])
+    split_people(SF4, "s25_person", (0, 380, 600, 775))
+    clean = inpaint_region(SF4, (856, 256, 1044, 532))
+    piece(clean, "s25_escalator", [(452, 636), (1140, 336), (1420, 336), (1424, 420), (1000, 604), (640, 792), (452, 792)], amp=8)
+
 if __name__ == "__main__":
-    build_textures()
-    build_pieces()
+    only2 = "--phase2" in sys.argv
+    if not only2:
+        build_textures()
+        build_pieces()
+    else:
+        try:
+            src = open(os.path.join(ROOT, "js", "layout.js")).read()
+            manifest.update(json.loads(src[src.index("{"):src.rindex("}") + 1]))
+        except Exception:
+            pass
+    build_phase2_textures()
+    build_phase2_pieces()
     with open(os.path.join(ROOT, "js", "layout.js"), "w") as f:
         f.write("// generated by tools/build_assets.py — original position (1920x1080 space) of each sliced layer\n")
         f.write("window.LAYOUT = " + json.dumps(manifest, indent=1) + ";\n")

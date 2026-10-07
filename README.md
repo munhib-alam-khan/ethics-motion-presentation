@@ -1,9 +1,14 @@
 # Does Integrity Survive Pressure? — motion-documentary presentation
 
-Business Ethics · Fall 2026. This is a presenter-controlled, offline, cinematic presentation.
-**Phase 1:** Scenes 01–05 are built (quality test). Scenes 06–34 come after approval.
+Business Ethics · Fall 2026. This is a presenter-controlled, offline, cinematic presentation. **All 34 scenes are built.**
 
-Direction, reference analysis, asset manifest and storyboard: [`docs/PHASE1_DIRECTION.md`](docs/PHASE1_DIRECTION.md).
+- Direction, reference analysis, motion language, Scenes 01–05 storyboard: [`docs/PHASE1_DIRECTION.md`](docs/PHASE1_DIRECTION.md)
+- Data check against the workbook, scene summary 06–34, images still to generate, PDF hero frames: [`docs/PHASE2_NOTES.md`](docs/PHASE2_NOTES.md)
+
+## Before presenting: two things to set
+
+1. **Evidence link (Scene 34):** open `js/config.js` and paste the OneDrive link into `EVIDENCE_URL`. Until then, the appendix shows a red placeholder.
+2. **Construction photos (Scenes 20–23):** save the four images listed in `docs/PHASE2_NOTES.md` §3 into `assets/images/` using exactly those filenames. They replace the "IMAGE TO GENERATE" cards automatically.
 
 ## Launch
 
@@ -36,7 +41,7 @@ Each scene plays its motion once (2–8 s), settles, then **waits indefinitely**
 - **PDF:** in Chrome, open `export.html`, press Ctrl+P, set Destination to *Save as PDF*, turn **Background graphics** on, and set Margins to *None*. Each scene prints as one 16:9 page (`@page` is 1920×1080). The small labels on each frame are hidden in print.
 - **PNG:** use Chrome DevTools → *Capture node screenshot* on a `.frame`, or any screenshot tool at 100 % zoom.
 
-The recommended hero frames for the PDF are listed in `docs/PHASE1_DIRECTION.md` §8.
+Recommended hero-frame set (19 pages): `export.html?scenes=1,2,4,5,6,8,9,11,14,15,16,19,22,25,26,27,28,33,34`
 
 ## Project structure
 
@@ -45,12 +50,13 @@ index.html            presentation
 export.html           export mode redirect
 css/main.css          stage, film overlays, typography
 css/inline.css        GENERATED: embedded fonts + grunge mask (file:// safe)
-js/vendor/            GSAP 3 (local, no CDN)
+js/vendor/            GSAP 3 + CustomEase + MotionPath (local, no CDN)
 js/engine.js          scene runtime, 2.5D camera, navigation, preload, export
 js/audio.js           synthesized WebAudio sound design (no files)
 js/layout.js          GENERATED: original position of each sliced layer
 js/scenes/common.js   shared motion vocabulary (tear, stamp, scatter, typewriter, slap…)
-js/scenes/s01–s05.js  one file per scene
+js/scenes/s01–s34.js  one file per scene
+js/config.js          EDIT ME: evidence link
 assets/source/        supplied styleframes (master art)
 assets/images/        sliced torn-paper layers and cut-outs (WebP + alpha)
 assets/textures/      paper, torn strips, halftone, grain, dust, masks
@@ -77,5 +83,5 @@ Copy the **whole folder** (USB, zip, OneDrive). Keep the structure intact. It ne
 ## Notes
 
 - Sound is minimal and synthesized: paper, slaps, rips, low thud and boom, mechanical tension, and faint room tone in documentary scenes. There is no music.
-- Performance: animations use GPU transforms only. The scene layers total about 6 MB of WebP and are decoded during the loading screen.
+- Performance: animations use GPU transforms only. All image layers (about 10 MB of WebP) are decoded during the loading screen, and only one scene is in memory at a time (two during a hand-off).
 - Licences: GSAP (standard no-charge licence), fonts (OFL / Apache 2.0). All imagery comes from the project's own styleframes.

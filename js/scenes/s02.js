@@ -62,7 +62,7 @@ Film.scene({
     </div>`;
     Film.initPieces(root);
     const q = k => Film.q(root, k);
-    const prev = Film.staticCopy(1, q('prev'), ctx.forwardAdjacent ? Film.lastCam[1] : null);
+    const prev = ctx.static ? null : Film.staticCopy(1, q('prev'), ctx.forwardAdjacent ? Film.lastCam[1] : null);   // final frame never shows scene 01
     const world = q('world');
     const cam = new Film.Cam(world);
     const tl = gsap.timeline({ paused: true });
@@ -70,7 +70,7 @@ Film.scene({
 
     // ── 0.0  dive into the Code-of-Conduct print (match cut)
     const code1 = { x: 277, y: 734 };       // centre of that print in scene 01
-    prev.cam.to(tl, { fx: code1.x, fy: code1.y, s: 3.15, duration: 1.15, ease: 'power3.in' }, 0);
+    if (prev) prev.cam.to(tl, { fx: code1.x, fy: code1.y, s: 3.15, duration: 1.15, ease: 'power3.in' }, 0);
     tl.call(() => Sfx.play('whoosh'), null, .1);
     cam.set({ fx: 960, fy: 470, s: 1.45, r: -1 });
     tl.to(world, { opacity: 1, duration: .28, ease: 'none' }, .95);
@@ -102,6 +102,6 @@ Film.scene({
 
     const idle = gsap.timeline({ paused: true, repeat: -1, yoyo: true });
     idle.to(cam, { fx: 2185, s: .545, duration: 12, ease: 'sine.inOut', onUpdate: cam.update });
-    return { tl, cam, idle, extra: [prev.tl] };
+    return { tl, cam, idle, extra: prev ? [prev.tl] : [] };
   }
 });
