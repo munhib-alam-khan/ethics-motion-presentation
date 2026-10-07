@@ -42,6 +42,16 @@ Each scene plays its motion once (2–8 s), settles, then **waits indefinitely**
 
 Recommended hero-frame set (19 pages): `export.html?scenes=1,2,4,5,6,8,9,11,14,15,16,19,22,25,26,27,28,33,34`
 
+## Submission PDF (already built)
+
+`submission/Does_Integrity_Survive_Pressure_Submission.pdf` contains 26 hero frames (16:9, one per page, with bookmarks). The evidence link in the appendix is clickable. To rebuild it:
+
+```
+npm i playwright-core
+node tools/export_frames.js submission/frames 1,5,6,7,8,9,10,11,13,14,15,16,18,19,21,22,24,25,26,27,28,29,30,32,33,34 1.5
+python tools/build_pdf.py submission/frames submission/Does_Integrity_Survive_Pressure_Submission.pdf 80
+```
+
 ## Project structure
 
 ```
